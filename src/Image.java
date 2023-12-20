@@ -1,9 +1,6 @@
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -185,7 +182,23 @@ public class Image {
         step = quantizerRanges.get(1).getStart() - quantizerRanges.get(0).getStart();
         String binaryText = "", compressedText = "";
         int nBits = (int)(Math.log(quantizerRanges.size())/ Math.log(2));
-
+        for(int i = 0; i < width; i++){
+            for(int j = 0; j < height; j++){
+                if(i == 0 || j == 0){
+                    binaryText += String.format("%8s", Integer.toBinaryString(quantizerList.get(i).get(j) & 0xFF)).replace(' ', '0');
+                }else{
+                    binaryText += String.format("%" + nBits + "s", Integer.toBinaryString(quantizerList.get(i).get(j) & 0xFF)).replace(' ', '0');
+                }
+            }
+        }
+        int lastSubString = binaryText.length() % 8;
+        if(lastSubString == 0)
+            lastSubString = 8;
+        for(int i = 0; i < binaryText.length(); i += 8) {
+            String binaryString =  binaryText.substring(i, Math.min(i + 8, binaryText.length()));
+            int intValue = Integer.parseInt(binaryString, 2);
+            compressedText += (char) intValue;
+        }
 
         try {
                 Path filePath = Paths.get(fileName);
@@ -194,11 +207,18 @@ public class Image {
                 } catch (IOException e) {
                 System.err.println("An error occurred while creating the file: " + e.getMessage());
                 }
-//                try (DataOutputStream writer = new DataOutputStream(new FileOutputStream(fileName))) {
-//                writer.writeBytes(width + " " +  + " " + compressedText);
-//                } catch (IOException e) {
-//                e.printStackTrace();
-//                }
+        try (DataOutputStream writer = new DataOutputStream(new FileOutputStream(fileName))) {
+            writer.writeInt(width);
+            writer.writeInt(height);
+            writer.writeInt(min);
+            writer.writeInt(max);
+            writer.writeInt(step);
+            writer.writeInt(lastSubString);
+            writer.writeBytes('\n' + compressedText);
+                } catch (IOException e) {
+                e.printStackTrace();
+        }
+
     }
     public void compress() {
         getQuantizerRanges();
@@ -216,6 +236,7 @@ public class Image {
                 decodeList.get(i).set(j, decode(i, j));
             }
         }
+        writeInFile();
     }
 
     void buildQuantizer(int min, double max, int step){
