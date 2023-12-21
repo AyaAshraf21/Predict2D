@@ -2,6 +2,18 @@ public class Quantizer {
     int start;
     int end;
     int code;
+    int qDash;
+    public int getqDash() {
+        return qDash;
+    }
+
+
+
+    public void setqDash(int qDash) {
+        this.qDash = qDash;
+    }
+
+
 
     public int getStart() {
         return start;
@@ -28,6 +40,6 @@ public class Quantizer {
     }
 
     public void printQuantizer (){
-        System.out.println(code + "  " + start + "-> "+end);
+        System.out.println(code + "  " + start + "-> "+end +" qdash " + qDash);
     }
 }

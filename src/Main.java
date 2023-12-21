@@ -49,8 +49,44 @@ public class Main {
 //        }
 //        System.out.println(image.putFirstRowColumn(list , encode));
         //image.readImage("D:\\im.jpg");
-        //image.compress("D:\\im.jpg", "D:\\compressedFile.bin");
-        image.decompress("D:\\compressedFile.bin","D:\\result.jpg");
+//        image.compress("D:\\im.jpg", "D:\\compressedFile.bin");
+        //image.readFile("D:\\compressedFile.bin");
+        list = new ArrayList<>();
 
+        row1 = new ArrayList<>();
+        row1.add(5);
+        row1.add(7);
+        row1.add(8);
+        row1.add(10);
+        list.add(row1);
+
+        // Create the second row and add it to the list
+        row2 = new ArrayList<>();
+        row2.add(6);
+        row2.add(1);
+        row2.add(2);
+        row2.add(1);
+        list.add(row2);
+
+        row3 = new ArrayList<>();
+        row3.add(7);
+        row3.add(2);
+        row3.add(2);
+        row3.add(2);
+        list.add(row3);
+
+        row4 = new ArrayList<>();
+        row4.add(9);
+        row4.add(2);
+        row4.add(1);
+        row4.add(2);
+
+        list.add(row4);/*
+        image.quantizerList = list;
+        System.out.println(image.quantizerList);*/
+        image.compress("D:\\im.jpg", "D:\\compressedFile.bin");
+        image.decompress("D:\\compressedFile.bin","D:\\result.jpg");
     }
+
+
 }

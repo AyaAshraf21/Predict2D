@@ -4,8 +4,11 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 
 public class Image {
@@ -102,7 +105,6 @@ public class Image {
         int originalPixel = originalList.get(x).get(y);
         int encodePixel = anotherList.get(x).get(y);
         int difference = originalPixel - encodePixel;
-
         return difference;
     }
 
@@ -176,11 +178,6 @@ public class Image {
     }
 
     public void writeInFile(String fileName) {
-
-        int min = 0, max = 0, step = 0;
-        min = quantizerRanges.get(0).getStart();
-        max = quantizerRanges.get(quantizerRanges.size() - 1).getEnd();
-        step = quantizerRanges.get(0).getEnd() - quantizerRanges.get(0).getStart();
         String binaryText = "", compressedText = "";
         int nBits = (int)(Math.log(quantizerRanges.size())/ Math.log(2));
         for(int i = 0; i < width; i++){
@@ -212,19 +209,62 @@ public class Image {
             System.err.println("An error occurred while creating the file: " + e.getMessage());
         }
         try (DataOutputStream writer = new DataOutputStream(new FileOutputStream(fileName))) {
-            writer.writeInt(width);
-            writer.writeInt(height);
-            writer.writeInt(min);
-            writer.writeInt(max);
-            writer.writeInt(step);
-            writer.writeInt(lastSubString);
+            /*System.out.println(binaryText);*/
+            writeNeededInfoDecomp(lastSubString);
             writer.writeBytes(compressedText);
-                } catch (IOException e) {
-                e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    void print(){
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                System.out.print(originalList.get(i).get(j)+" ");
+            }
+            System.out.println();
+        }
+        System.out.println("pred List ");
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                System.out.print(predictList.get(i).get(j)+ " ");
+            }
+            System.out.println();
+        }
+        System.out.println("diff List ");
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                System.out.print(differenceList.get(i).get(j)+ " ");
+            }
+            System.out.println();
+        }System.out.println("quan List ");
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                System.out.print(quantizerList.get(i).get(j)+ " ");
+            }
+            System.out.println();
+        }System.out.println("DEQuan List ");
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                System.out.print(dequantizerList.get(i).get(j)+ " ");
+            }
+            System.out.println();
+        }
+        System.out.println("decoded List ");
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                System.out.print(decodeList.get(i).get(j)+ " ");
+            }
+            System.out.println();
+        }
+
+        for(Quantizer q:quantizerRanges){
+            q.printQuantizer();
+            System.out.println("");
         }
     }
     public void compress(String imagePath, String outputFileName) {
         readImage(imagePath);
+        originalList = getImagePixels(imagePath);
         getQuantizerRanges();
         decodeList = putFirstRowColumn();
         predictList = putFirstRowColumn();
@@ -239,58 +279,50 @@ public class Image {
                 dequantizerList.get(i).set(j, getDequantizedDiff(i, j));
                 decodeList.get(i).set(j, decode(i, j));
             }
-        }/*
-        System.out.println(decodeList);
-        System.out.println(quantizerRanges);*/
+        }
+        print();
         writeInFile(outputFileName);
-
     }
 
     void buildQuantizer(int min, double max, int step){
         quantizerRanges = new ArrayList<>();
-        double stepsNum = Math.ceil(max /step);
         int start = min;
-        int end = step - 1;
+        int end =min + (step) - 1;
         int code = 0;
-        while(stepsNum > 0){
+        int strQDash = (min + step / 2);
+        while(end <= max){
             Quantizer q = new Quantizer();
             q.setStart(start);
             q.setEnd(end);
             q.setCode(code);
+            q.setqDash(strQDash);
             quantizerRanges.add(q);
-            start += step;
-            end += step;
+            strQDash += (step);
+            start = end + 1;
+            end = start + (step) - 1;
             code++;
-            stepsNum--;
         }
 
     }
-    void readFile(String file){
-        ArrayList<Integer> needed = new ArrayList<>();
-        String text ="";
-        try (DataInputStream reader = new DataInputStream(new FileInputStream(file))) {
-            int i=0;
-            while(reader.available() > 0){
-                 needed.add((int) reader.readByte());
-                 i++;
-                 if(i==6){
-                     break;
-                 }
-            }
-            while (reader.available() > 0) {
-                char c = (char) reader.readByte();
+    void readFile(String fileName){
+        String text = "";
+        File file = new File(fileName);
+        try (FileInputStream reader = new FileInputStream(file)) {
+            int content;
+            while ((content = reader.read()) != -1) {
+                char c = (char) content;
                 text += c;
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        width = needed.get(0);
-        height = needed.get(1);
-        buildQuantizer(needed.get(2),(double)needed.get(3),needed.get(4));
+        int remender = readNeededInfoComp();//this function also calls buildQuantizer function
         quantizerList = new ArrayList<>();
         fillList(quantizerList);
-        convertAsciiToBinary(text,needed.get(5));
+        convertAsciiToBinary(text,remender);
+        quantizerList = new ArrayList<>();
+        fillList(quantizerList);
+        convertAsciiToBinary(text,remender);
 
     }
     void fillList(List<List<Integer>> ls){
@@ -353,6 +385,52 @@ public class Image {
     }
     void writeImage(String imagePath){
         rWImage.convert2DArrayToImage(imagePath,decodeList);
+    }
+     void writeNeededInfoDecomp(int remender){
+        String filePath = System.getProperty("user.dir") + File.separator + "quantizer.txt";
+        try {
+            File file = new File(filePath);
+            if (file.exists()) {//delete its content(make it empty)
+                FileWriter fileWriter = new FileWriter(file);
+                fileWriter.close();
+            } else {// Create a new file
+                file.createNewFile();
+            }
+
+            int min = 0, max = 0, step = 0;
+            min = quantizerRanges.get(0).getStart();
+            max = quantizerRanges.get(quantizerRanges.size() - 1).getEnd();
+            step = (quantizerRanges.get(0).getEnd() - quantizerRanges.get(0).getStart() + 1);
+            //System.out.println(height +" =h  w="+ width+" "+min + "=mn  mx="+max +"  step=" + step + " lasts" + remender);
+
+            String contentToAppend = String.valueOf(height) + " " + String.valueOf(width) + " " + String.valueOf(min) + " " +
+                    String.valueOf(max) + " " + String.valueOf(step) + " " + String.valueOf(remender) ;
+            Files.write(Path.of(filePath), contentToAppend.getBytes(), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    int readNeededInfoComp(){
+        String filePath = System.getProperty("user.dir") + File.separator + "quantizer.txt";
+        try {
+            File file = new File(filePath);
+            Scanner myReader = new Scanner(file);
+            int min = 0, max = 0, step = 0, rem;
+            height = myReader.nextInt();
+            width = myReader.nextInt();
+            min = myReader.nextInt();
+            max = myReader.nextInt();
+            step = myReader.nextInt();
+            rem = myReader.nextInt();
+            //System.out.println(height +" =h  w="+ width+" "+min + "=mn  mx="+max +"  step=" + step + " lasts" + rem);
+            buildQuantizer(min,(double)max, step);
+            myReader.close();
+            return rem;
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred while reading the file.");
+            e.printStackTrace();
+        }
+        return 0;
     }
 
 }

@@ -14,7 +14,6 @@ public class ReadWriteImage {
                 BufferedImage image = ImageIO.read(new File(imagePath));
 
                 // Get the dimensions of the image
-
                 rowsColumns[0] = image.getHeight();
                 rowsColumns[1] = image.getWidth();
                 // Convert the image to a 2D array
@@ -30,7 +29,7 @@ public class ReadWriteImage {
                     for (int j = 0; j < rowsColumns[1]; j++) {
                         result.get(i).set(j, image.getRGB(i, j) & 0xFF); // Get the grayscale value
                     }
-                }/**/
+                }
                 return result;
             } catch (IOException e) {
                 e.printStackTrace();
