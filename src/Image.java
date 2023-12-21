@@ -10,6 +10,7 @@ import java.util.List;
 
 public class Image {
 
+    private ReadWriteImage rWImage = new ReadWriteImage();
     public int width;
     public int height;
     public List<List<Integer>> originalList;
@@ -174,12 +175,12 @@ public class Image {
         buildQuantizer(min,max,step);
     }
 
-    public void writeInFile() {
-        String fileName = "compressedFile.bin";
+    public void writeInFile(String fileName) {
+
         int min = 0, max = 0, step = 0;
         min = quantizerRanges.get(0).getStart();
         max = quantizerRanges.get(quantizerRanges.size() - 1).getEnd();
-        step = quantizerRanges.get(1).getStart() - quantizerRanges.get(0).getStart();
+        step = quantizerRanges.get(0).getEnd() - quantizerRanges.get(0).getStart();
         String binaryText = "", compressedText = "";
         int nBits = (int)(Math.log(quantizerRanges.size())/ Math.log(2));
         for(int i = 0; i < width; i++){
@@ -201,12 +202,15 @@ public class Image {
         }
 
         try {
-                Path filePath = Paths.get(fileName);
+            Path filePath = Paths.get(fileName);
+            if (!Files.exists(filePath)) {
                 Files.createFile(filePath);
                 System.out.println("File created successfully at: " + filePath.toAbsolutePath());
-                } catch (IOException e) {
-                System.err.println("An error occurred while creating the file: " + e.getMessage());
-                }
+            }
+        }
+        catch (IOException e) {
+            System.err.println("An error occurred while creating the file: " + e.getMessage());
+        }
         try (DataOutputStream writer = new DataOutputStream(new FileOutputStream(fileName))) {
             writer.writeInt(width);
             writer.writeInt(height);
@@ -214,13 +218,13 @@ public class Image {
             writer.writeInt(max);
             writer.writeInt(step);
             writer.writeInt(lastSubString);
-            writer.writeBytes('\n' + compressedText);
+            writer.writeBytes(compressedText);
                 } catch (IOException e) {
                 e.printStackTrace();
         }
-
     }
-    public void compress() {
+    public void compress(String imagePath, String outputFileName) {
+        readImage(imagePath);
         getQuantizerRanges();
         decodeList = putFirstRowColumn();
         predictList = putFirstRowColumn();
@@ -235,12 +239,15 @@ public class Image {
                 dequantizerList.get(i).set(j, getDequantizedDiff(i, j));
                 decodeList.get(i).set(j, decode(i, j));
             }
-        }
-        writeInFile();
+        }/*
+        System.out.println(decodeList);
+        System.out.println(quantizerRanges);*/
+        writeInFile(outputFileName);
+
     }
 
     void buildQuantizer(int min, double max, int step){
-        quantizerRanges.clear();
+        quantizerRanges = new ArrayList<>();
         double stepsNum = Math.ceil(max /step);
         int start = min;
         int end = step - 1;
@@ -281,8 +288,6 @@ public class Image {
         width = needed.get(0);
         height = needed.get(1);
         buildQuantizer(needed.get(2),(double)needed.get(3),needed.get(4));
-        decodeList = new ArrayList<>();
-        fillList(decodeList);
         quantizerList = new ArrayList<>();
         fillList(quantizerList);
         convertAsciiToBinary(text,needed.get(5));
@@ -290,7 +295,10 @@ public class Image {
     }
     void fillList(List<List<Integer>> ls){
         for(int i = 0; i < height; i++){
-            List<Integer> row = new ArrayList<>(width);
+            List<Integer> row = new ArrayList<>();
+            for (int j = 0; j < width; j++) {
+                row.add(0); // Get the grayscale value
+            }
             ls.add(row);
         }
     }
@@ -317,26 +325,34 @@ public class Image {
         }
 
     }
-    public void decompress(){
-        int i = 0;
+    public void decompress(String inputFileName, String imagePath){
+        readFile(inputFileName);
+        decodeList = new ArrayList<>();
+        fillList(decodeList);
         for(int j = 0; j < width; j++){
             decodeList.get(0).set(j, quantizerList.get(0).get(j));
         }
-
-    }
-    static String readFromFileBinary(String pathName) {
-        File file = new File(pathName);
-        String text = "";
-        try (DataInputStream reader = new DataInputStream(new FileInputStream(file))) {
-            while (reader.available() > 0) {
-                char c = (char) reader.readByte();
-                text += c;
+        for(int j = 0; j < height; j++){
+            decodeList.get(j).set(0, quantizerList.get(j).get(0));
+        }
+        dequantizerList = new ArrayList<>();
+        fillList(dequantizerList);
+        for(int i = 1; i < height; i++){
+            for(int j = 1; j < width; j++){
+                dequantizerList.get(i).set(j, getDequantizedDiff(i, j));
+                decodeList.get(i).set(j, (predictPixel(i, j, decodeList) + dequantizerList.get(i).get(j)));
             }
         }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return text;
+        writeImage(imagePath);
+    }
+    void readImage(String imagePath){
+        int[] rowsColomuns = new int[2];
+        originalList = rWImage.convertImageTo2DArray(imagePath,rowsColomuns);
+        height = rowsColomuns[0];
+        width = rowsColomuns[1];
+    }
+    void writeImage(String imagePath){
+        rWImage.convert2DArrayToImage(imagePath,decodeList);
     }
 
 }

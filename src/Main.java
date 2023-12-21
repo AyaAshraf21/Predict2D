@@ -48,9 +48,9 @@ public class Main {
 //            quantizer.printQuantizer();
 //        }
 //        System.out.println(image.putFirstRowColumn(list , encode));
-
-        //image.compress();
-
+        //image.readImage("D:\\im.jpg");
+        //image.compress("D:\\im.jpg", "D:\\compressedFile.bin");
+        image.decompress("D:\\compressedFile.bin","D:\\result.jpg");
 
     }
 }
