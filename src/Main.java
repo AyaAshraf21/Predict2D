@@ -84,8 +84,14 @@ public class Main {
         list.add(row4);/*
         image.quantizerList = list;
         System.out.println(image.quantizerList);*/
-        image.compress("D:\\im.jpg", "D:\\compressedFile.bin");
-        image.decompress("D:\\compressedFile.bin","D:\\result.jpg");
+        image.compress("im.jpg", "compressedFile.bin");
+        List<List<Integer>> originalQuantizerList = image.quantizerList;
+
+        //System.out.println("decompress");
+        image.decompress("compressedFile.bin", "result.jpg");
+
+
+
     }
 
 

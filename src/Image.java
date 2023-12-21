@@ -25,11 +25,9 @@ public class Image {
 
     List<Quantizer> quantizerRanges ;
 
-    public List<List<Integer>>  getImagePixels(String imagePath)
-    {
+    public List<List<Integer>> getImagePixels(String imagePath) {
         List<List<Integer>> pixels = new ArrayList<>();
-        try{
-
+        try {
             File imageFile = new File(imagePath);
             BufferedImage image = ImageIO.read(imageFile);
 
@@ -176,10 +174,11 @@ public class Image {
         int step = 3;
         buildQuantizer(min,max,step);
     }
-
+    String Text = "";
     public void writeInFile(String fileName) {
         String binaryText = "", compressedText = "";
         int nBits = (int)(Math.log(quantizerRanges.size())/ Math.log(2));
+        //System.out.println(nBits);
         for(int i = 0; i < width; i++){
             for(int j = 0; j < height; j++){
                 if(i == 0 || j == 0){
@@ -189,6 +188,7 @@ public class Image {
                 }
             }
         }
+
         int lastSubString = binaryText.length() % 8;
         if(lastSubString == 0)
             lastSubString = 8;
@@ -197,7 +197,7 @@ public class Image {
             int intValue = Integer.parseInt(binaryString, 2);
             compressedText += (char) intValue;
         }
-
+        Text = binaryText;
         try {
             Path filePath = Paths.get(fileName);
             if (!Files.exists(filePath)) {
@@ -280,10 +280,9 @@ public class Image {
                 decodeList.get(i).set(j, decode(i, j));
             }
         }
-        print();
+        //print();
         writeInFile(outputFileName);
     }
-
     void buildQuantizer(int min, double max, int step){
         quantizerRanges = new ArrayList<>();
         int start = min;
@@ -316,20 +315,20 @@ public class Image {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        int remender = readNeededInfoComp();//this function also calls buildQuantizer function
+        int remainder = readNeededInfoComp();//this function also calls buildQuantizer function
         quantizerList = new ArrayList<>();
         fillList(quantizerList);
-        convertAsciiToBinary(text,remender);
-        quantizerList = new ArrayList<>();
-        fillList(quantizerList);
-        convertAsciiToBinary(text,remender);
+        convertAsciiToBinary(text,remainder);
+//        quantizerList = new ArrayList<>();
+//        fillList(quantizerList);
+//        convertAsciiToBinary(text,remainder);
 
     }
-    void fillList(List<List<Integer>> ls){
-        for(int i = 0; i < height; i++){
+    private void fillList(List<List<Integer>> ls) {
+        for (int i = 0; i < height; i++) {
             List<Integer> row = new ArrayList<>();
             for (int j = 0; j < width; j++) {
-                row.add(0); // Get the grayscale value
+                row.add(0);
             }
             ls.add(row);
         }
@@ -341,42 +340,50 @@ public class Image {
         }
         binaryText += String.format("%" + lastSubString + "s", Integer.toBinaryString(input.charAt(input.length()-1) & 0xFF)).replace(' ', '0');
         int nBits = (int)(Math.log(quantizerRanges.size())/ Math.log(2));
+        //System.out.println(nBits);
         int start = 0;
         for(int i = 0; i < width && start < binaryText.length(); i++){
             for(int j = 0; j < height && start < binaryText.length(); j++){
                 if(i == 0 || j == 0){
-                    int val = Integer.parseInt(binaryText.substring(start, start + 8));
+                    int val = Integer.parseInt(binaryText.substring(start, start + 8), 2);
                     quantizerList.get(i).set(j, val);
                     start += 8;
-                }else{
-                    int val = Integer.parseInt(binaryText.substring(start, start + nBits));
+                } else {
+                    int val = Integer.parseInt(binaryText.substring(start, start + nBits), 2);
                     quantizerList.get(i).set(j, val);
                     start += nBits;
                 }
             }
         }
+        if(Text.equals(binaryText)) {
+            System.out.println("true");
+        }
+        else {
+            System.out.println("false");
+        }
 
     }
-    public void decompress(String inputFileName, String imagePath){
+    public void decompress(String inputFileName, String imagePath) {
         readFile(inputFileName);
         decodeList = new ArrayList<>();
         fillList(decodeList);
-        for(int j = 0; j < width; j++){
+        for (int j = 0; j < width; j++) {
             decodeList.get(0).set(j, quantizerList.get(0).get(j));
         }
-        for(int j = 0; j < height; j++){
+        for (int j = 0; j < height; j++) {
             decodeList.get(j).set(0, quantizerList.get(j).get(0));
         }
         dequantizerList = new ArrayList<>();
         fillList(dequantizerList);
-        for(int i = 1; i < height; i++){
-            for(int j = 1; j < width; j++){
+        for (int i = 1; i < height; i++) {
+            for (int j = 1; j < width; j++) {
                 dequantizerList.get(i).set(j, getDequantizedDiff(i, j));
                 decodeList.get(i).set(j, (predictPixel(i, j, decodeList) + dequantizerList.get(i).get(j)));
             }
         }
         writeImage(imagePath);
     }
+
     void readImage(String imagePath){
         int[] rowsColomuns = new int[2];
         originalList = rWImage.convertImageTo2DArray(imagePath,rowsColomuns);
