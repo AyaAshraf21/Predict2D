@@ -22,7 +22,7 @@ public class ReadWriteImage {
             for (int i = 0; i < rowsColumns[0]; i++) {
                 List<Integer> row = new ArrayList<>();
                 for (int j = 0; j < rowsColumns[1]; j++) {
-                    row.add(image.getRGB(j, i) & 0xFF); // Corrected indices
+                    row.add(image.getRGB(j, i) & 0xFF); 
                 }
                 result.add(row);
             }
@@ -36,12 +36,13 @@ public class ReadWriteImage {
         public void convert2DArrayToImage(String imageName, List<List<Integer>> image){
 
             BufferedImage theImage = new BufferedImage(image.size(), image.get(0).size(), BufferedImage.TYPE_INT_RGB);
-            for (int i = 0; i < image.size(); i++) {
-                for (int j = 0; j < image.get(0).size(); j++) {
-                    int value = image.get(i).get(j) << 16 | image.get(i).get(j) << 8 | image.get(i).get(j);
+            for (int i = 0; i < image.get(0).size(); i++) {
+                for (int j = 0; j < image.size(); j++) {
+                    int value = image.get(j).get(i) << 16 | image.get(j).get(i) << 8 | image.get(j).get(i);
                     theImage.setRGB(i, j, value);
                 }
             }
+
 
             File outputfile = new File(imageName);
             try {

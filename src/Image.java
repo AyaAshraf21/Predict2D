@@ -215,52 +215,7 @@ public class Image {
             e.printStackTrace();
         }
     }
-    void print(){
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                System.out.print(originalList.get(i).get(j)+" ");
-            }
-            System.out.println();
-        }
-        System.out.println("pred List ");
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                System.out.print(predictList.get(i).get(j)+ " ");
-            }
-            System.out.println();
-        }
-        System.out.println("diff List ");
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                System.out.print(differenceList.get(i).get(j)+ " ");
-            }
-            System.out.println();
-        }System.out.println("quan List ");
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                System.out.print(quantizerList.get(i).get(j)+ " ");
-            }
-            System.out.println();
-        }System.out.println("DEQuan List ");
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                System.out.print(dequantizerList.get(i).get(j)+ " ");
-            }
-            System.out.println();
-        }
-        System.out.println("decoded List ");
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                System.out.print(decodeList.get(i).get(j)+ " ");
-            }
-            System.out.println();
-        }
 
-        for(Quantizer q:quantizerRanges){
-            q.printQuantizer();
-            System.out.println("");
-        }
-    }
     public void compress(String imagePath, String outputFileName) {
         readImage(imagePath);
         originalList = getImagePixels(imagePath);
