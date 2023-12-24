@@ -16,7 +16,6 @@ public class ReadWriteImage {
             // Get the dimensions of the image
             rowsColumns[0] = image.getHeight();
             rowsColumns[1] = image.getWidth();
-
             // Convert the image to a 2D array
             List<List<Integer>> result = new ArrayList<>();
             for (int i = 0; i < rowsColumns[0]; i++) {

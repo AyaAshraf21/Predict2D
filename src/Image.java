@@ -271,6 +271,7 @@ public class Image {
         originalList = rWImage.convertImageTo2DArray(imagePath,rowsColomuns);
         height = rowsColomuns[0];
         width = rowsColomuns[1];
+        //System.out.println(height + " "+ width);
     }
     void writeImage(String imagePath){
         rWImage.convert2DArrayToImage(imagePath,decodeList);
@@ -290,6 +291,7 @@ public class Image {
             step = (quantizerRanges.get(0).getEnd() - quantizerRanges.get(0).getStart() + 1);
             String contentToAppend = String.valueOf(height) + " " + String.valueOf(width) + " " + String.valueOf(min) + " " +
                     String.valueOf(max) + " " + String.valueOf(step) + " " + String.valueOf(remender) ;
+
             Files.write(Path.of(filePath), contentToAppend.getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
@@ -303,6 +305,7 @@ public class Image {
             int min = 0, max = 0, step = 0, rem;
             height = myReader.nextInt();
             width = myReader.nextInt();
+            System.out.println(height +" "+width);
             min = myReader.nextInt();
             max = myReader.nextInt();
             step = myReader.nextInt();
