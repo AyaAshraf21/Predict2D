@@ -8,34 +8,31 @@ import java.util.List;
 
 public class ReadWriteImage {
 
-        public List<List<Integer>> convertImageTo2DArray(String imagePath, int[] rowsColumns) {
-            try {
-                // Load the image using ImageIO
-                BufferedImage image = ImageIO.read(new File(imagePath));
+    public List<List<Integer>> convertImageTo2DArray(String imagePath, int[] rowsColumns) {
+        try {
+            // Load the image using ImageIO
+            BufferedImage image = ImageIO.read(new File(imagePath));
 
-                // Get the dimensions of the image
-                rowsColumns[0] = image.getHeight();
-                rowsColumns[1] = image.getWidth();
-                // Convert the image to a 2D array
-                List<List<Integer>> result = new ArrayList<>();
-                for(int i=0;i<rowsColumns[0]; i++){
-                    List<Integer> row = new ArrayList<>();
-                    for (int j = 0; j < rowsColumns[1]; j++) {
-                        row.add(0); // Get the grayscale value
-                    }
-                    result.add(row);
+            // Get the dimensions of the image
+            rowsColumns[0] = image.getHeight();
+            rowsColumns[1] = image.getWidth();
+
+            // Convert the image to a 2D array
+            List<List<Integer>> result = new ArrayList<>();
+            for (int i = 0; i < rowsColumns[0]; i++) {
+                List<Integer> row = new ArrayList<>();
+                for (int j = 0; j < rowsColumns[1]; j++) {
+                    row.add(image.getRGB(j, i) & 0xFF); // Corrected indices
                 }
-                for (int i = 0; i < rowsColumns[0]; i++) {
-                    for (int j = 0; j < rowsColumns[1]; j++) {
-                        result.get(i).set(j, image.getRGB(i, j) & 0xFF); // Get the grayscale value
-                    }
-                }
-                return result;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
+                result.add(row);
             }
+            return result;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
+    }
+
         public void convert2DArrayToImage(String imageName, List<List<Integer>> image){
 
             BufferedImage theImage = new BufferedImage(image.size(), image.get(0).size(), BufferedImage.TYPE_INT_RGB);

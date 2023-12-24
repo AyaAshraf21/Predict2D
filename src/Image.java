@@ -174,10 +174,10 @@ public class Image {
         int step = 3;
         buildQuantizer(min,max,step);
     }
-    String Text = "";
+
     public void writeInFile(String fileName) {
         String binaryText = "", compressedText = "";
-        int nBits = (int)(Math.log(quantizerRanges.size())/ Math.log(2));
+        int nBits = 8;
         //System.out.println(nBits);
         for(int i = 0; i < width; i++){
             for(int j = 0; j < height; j++){
@@ -197,7 +197,6 @@ public class Image {
             int intValue = Integer.parseInt(binaryString, 2);
             compressedText += (char) intValue;
         }
-        Text = binaryText;
         try {
             Path filePath = Paths.get(fileName);
             if (!Files.exists(filePath)) {
@@ -339,7 +338,7 @@ public class Image {
             binaryText += String.format("%8s", Integer.toBinaryString(input.charAt(j) & 0xFF)).replace(' ', '0');
         }
         binaryText += String.format("%" + lastSubString + "s", Integer.toBinaryString(input.charAt(input.length()-1) & 0xFF)).replace(' ', '0');
-        int nBits = (int)(Math.log(quantizerRanges.size())/ Math.log(2));
+        int nBits = 8;
         //System.out.println(nBits);
         int start = 0;
         for(int i = 0; i < width && start < binaryText.length(); i++){
@@ -355,12 +354,7 @@ public class Image {
                 }
             }
         }
-        if(Text.equals(binaryText)) {
-            System.out.println("true");
-        }
-        else {
-            System.out.println("false");
-        }
+
 
     }
     public void decompress(String inputFileName, String imagePath) {
@@ -393,7 +387,7 @@ public class Image {
     void writeImage(String imagePath){
         rWImage.convert2DArrayToImage(imagePath,decodeList);
     }
-     void writeNeededInfoDecomp(int remender){
+    void writeNeededInfoDecomp(int remender){
         String filePath = System.getProperty("user.dir") + File.separator + "quantizer.txt";
         try {
             File file = new File(filePath);
