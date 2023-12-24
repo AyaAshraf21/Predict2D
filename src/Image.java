@@ -142,45 +142,46 @@ public class Image {
     }
 
 
-    public void getQuantizerRanges(){
+    public void getQuantizerRanges() {
         List<List<Integer>> predict = new ArrayList<>();
         List<List<Integer>> difference = new ArrayList<>();
 
         predict = putFirstRowColumn();
         difference = putFirstRowColumn();
-        for(int i=1 ;i<width ;i++){
-            for(int j=1 ; j<height ; j++){
-                predict.get(i).set(j , predictPixel(i , j , originalList));
+        for (int i = 1; i < height; i++) {
+            for (int j = 1; j < width; j++) {
+                predict.get(i).set(j, predictPixel(i, j, originalList));
             }
         }
-        for(int i=1 ;i<width ;i++){
-            for(int j=1 ; j<height ; j++){
-                difference.get(i).set(j , getDifference(i , j , predict));
+        for (int i = 1; i < height; i++) {
+            for (int j = 1; j < width; j++) {
+                difference.get(i).set(j, getDifference(i, j, predict));
             }
         }
         double max = -300;
         int min = 300;
-        for(int i=1 ; i<width ; i++){
-            for(int j=1 ; j<height ; j++){
-                if(difference.get(i).get(j) > max){
+        for (int i = 1; i < height; i++) {
+            for (int j = 1; j < width; j++) {
+                if (difference.get(i).get(j) > max) {
                     max = difference.get(i).get(j);
                 }
-                if(difference.get(i).get(j) < min){
+                if (difference.get(i).get(j) < min) {
                     min = difference.get(i).get(j);
                 }
             }
         }
 
         int step = 3;
-        buildQuantizer(min,max,step);
+        buildQuantizer(min, max, step);
     }
+
 
     public void writeInFile(String fileName) {
         String binaryText = "", compressedText = "";
         int nBits = 8;
         //System.out.println(nBits);
-        for(int i = 0; i < width; i++){
-            for(int j = 0; j < height; j++){
+        for(int i = 0; i < height; i++){
+            for(int j = 0; j < width; j++){
                 if(i == 0 || j == 0){
                     binaryText += String.format("%8s", Integer.toBinaryString(quantizerList.get(i).get(j) & 0xFF)).replace(' ', '0');
                 }else{
@@ -225,8 +226,8 @@ public class Image {
         quantizerList = putFirstRowColumn();
         dequantizerList = putFirstRowColumn();
         differenceList = putFirstRowColumn();
-        for (int i = 1; i < width; i++) {
-            for (int j = 1; j < height; j++) {
+        for (int i = 1; i < height; i++) {
+            for (int j = 1; j < width; j++) {
                 predictList.get(i).set(j, predictPixel(i, j, decodeList));
                 differenceList.get(i).set(j, getDifference(i, j, predictList));
                 quantizerList.get(i).set(j, getQuantizedDiff(i, j));
@@ -296,8 +297,8 @@ public class Image {
         int nBits = 8;
         //System.out.println(nBits);
         int start = 0;
-        for(int i = 0; i < width && start < binaryText.length(); i++){
-            for(int j = 0; j < height && start < binaryText.length(); j++){
+        for(int i = 0; i < height && start < binaryText.length(); i++){
+            for(int j = 0; j < width && start < binaryText.length(); j++){
                 if(i == 0 || j == 0){
                     int val = Integer.parseInt(binaryText.substring(start, start + 8), 2);
                     quantizerList.get(i).set(j, val);
