@@ -22,7 +22,7 @@ public class ReadWriteImage {
             for (int i = 0; i < rowsColumns[0]; i++) {
                 List<Integer> row = new ArrayList<>();
                 for (int j = 0; j < rowsColumns[1]; j++) {
-                    row.add(image.getRGB(j, i) & 0xFF);
+                    row.add(image.getRGB(j, i) & 0xFF); 
                 }
                 result.add(row);
             }

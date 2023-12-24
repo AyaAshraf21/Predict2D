@@ -25,32 +25,6 @@ public class Image {
 
     List<Quantizer> quantizerRanges ;
 
-    public List<List<Integer>> getImagePixels(String imagePath) {
-        List<List<Integer>> pixels = new ArrayList<>();
-        try {
-            File imageFile = new File(imagePath);
-            BufferedImage image = ImageIO.read(imageFile);
-
-            width = image.getWidth();
-            height = image.getHeight();
-
-            for (int y = 0; y < height; y++) {
-                List<Integer> row = new ArrayList<>();
-                for (int x = 0; x < width; x++) {
-                    int pixel = image.getRGB(x, y);
-                    int grayValue = (pixel >> 16) & 0xFF;
-                    row.add(grayValue);
-                }
-                pixels.add(row);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return pixels;
-    }
-
-
-
     public List<List<Integer>> putFirstRowColumn() {
         // Get first row and first column from the original image and put them in all lists
         List<List<Integer>> encodeImage = new ArrayList<>();
@@ -142,44 +116,11 @@ public class Image {
     }
 
 
-    public void getQuantizerRanges() {
-        List<List<Integer>> predict = new ArrayList<>();
-        List<List<Integer>> difference = new ArrayList<>();
-
-        predict = putFirstRowColumn();
-        difference = putFirstRowColumn();
-        for (int i = 1; i < height; i++) {
-            for (int j = 1; j < width; j++) {
-                predict.get(i).set(j, predictPixel(i, j, originalList));
-            }
-        }
-        for (int i = 1; i < height; i++) {
-            for (int j = 1; j < width; j++) {
-                difference.get(i).set(j, getDifference(i, j, predict));
-            }
-        }
-        double max = -300;
-        int min = 300;
-        for (int i = 1; i < height; i++) {
-            for (int j = 1; j < width; j++) {
-                if (difference.get(i).get(j) > max) {
-                    max = difference.get(i).get(j);
-                }
-                if (difference.get(i).get(j) < min) {
-                    min = difference.get(i).get(j);
-                }
-            }
-        }
-
-        int step = 3;
-        buildQuantizer(min, max, step);
-    }
-
-
     public void writeInFile(String fileName) {
         String binaryText = "", compressedText = "";
-        int nBits = 8;
-        //System.out.println(nBits);
+
+        int nBits = (int)Math.ceil(Math.log(quantizerRanges.size())/ Math.log(2));
+
         for(int i = 0; i < height; i++){
             for(int j = 0; j < width; j++){
                 if(i == 0 || j == 0){
@@ -209,7 +150,6 @@ public class Image {
             System.err.println("An error occurred while creating the file: " + e.getMessage());
         }
         try (DataOutputStream writer = new DataOutputStream(new FileOutputStream(fileName))) {
-            /*System.out.println(binaryText);*/
             writeNeededInfoDecomp(lastSubString);
             writer.writeBytes(compressedText);
         } catch (IOException e) {
@@ -219,8 +159,7 @@ public class Image {
 
     public void compress(String imagePath, String outputFileName) {
         readImage(imagePath);
-        originalList = getImagePixels(imagePath);
-        getQuantizerRanges();
+        buildQuantizer(-255,255,50);
         decodeList = putFirstRowColumn();
         predictList = putFirstRowColumn();
         quantizerList = putFirstRowColumn();
@@ -235,7 +174,6 @@ public class Image {
                 decodeList.get(i).set(j, decode(i, j));
             }
         }
-        //print();
         writeInFile(outputFileName);
     }
     void buildQuantizer(int min, double max, int step){
@@ -256,7 +194,6 @@ public class Image {
             end = start + (step) - 1;
             code++;
         }
-
     }
     void readFile(String fileName){
         String text = "";
@@ -274,10 +211,6 @@ public class Image {
         quantizerList = new ArrayList<>();
         fillList(quantizerList);
         convertAsciiToBinary(text,remainder);
-//        quantizerList = new ArrayList<>();
-//        fillList(quantizerList);
-//        convertAsciiToBinary(text,remainder);
-
     }
     private void fillList(List<List<Integer>> ls) {
         for (int i = 0; i < height; i++) {
@@ -294,11 +227,10 @@ public class Image {
             binaryText += String.format("%8s", Integer.toBinaryString(input.charAt(j) & 0xFF)).replace(' ', '0');
         }
         binaryText += String.format("%" + lastSubString + "s", Integer.toBinaryString(input.charAt(input.length()-1) & 0xFF)).replace(' ', '0');
-        int nBits = 8;
-        //System.out.println(nBits);
+        int nBits = (int)Math.ceil(Math.log(quantizerRanges.size())/ Math.log(2));
         int start = 0;
         for(int i = 0; i < height && start < binaryText.length(); i++){
-            for(int j = 0; j < width && start < binaryText.length(); j++){
+            for(int j = 0; j <  width&& start < binaryText.length(); j++){
                 if(i == 0 || j == 0){
                     int val = Integer.parseInt(binaryText.substring(start, start + 8), 2);
                     quantizerList.get(i).set(j, val);
@@ -353,13 +285,9 @@ public class Image {
             } else {// Create a new file
                 file.createNewFile();
             }
-
-            int min = 0, max = 0, step = 0;
-            min = quantizerRanges.get(0).getStart();
+            int min = quantizerRanges.get(0).getStart(), max = 0, step = 0;
             max = quantizerRanges.get(quantizerRanges.size() - 1).getEnd();
             step = (quantizerRanges.get(0).getEnd() - quantizerRanges.get(0).getStart() + 1);
-            //System.out.println(height +" =h  w="+ width+" "+min + "=mn  mx="+max +"  step=" + step + " lasts" + remender);
-
             String contentToAppend = String.valueOf(height) + " " + String.valueOf(width) + " " + String.valueOf(min) + " " +
                     String.valueOf(max) + " " + String.valueOf(step) + " " + String.valueOf(remender) ;
             Files.write(Path.of(filePath), contentToAppend.getBytes(), StandardOpenOption.APPEND);
@@ -380,7 +308,7 @@ public class Image {
             step = myReader.nextInt();
             rem = myReader.nextInt();
             //System.out.println(height +" =h  w="+ width+" "+min + "=mn  mx="+max +"  step=" + step + " lasts" + rem);
-            buildQuantizer(min,(double)max, step);
+            buildQuantizer(min,max, step);
             myReader.close();
             return rem;
         } catch (FileNotFoundException e) {
@@ -389,5 +317,35 @@ public class Image {
         }
         return 0;
     }
+   /* public void getQuantizerRanges(){
+        List<List<Integer>> predict = new ArrayList<>();
+        List<List<Integer>> difference = new ArrayList<>();
 
+        predict = putFirstRowColumn();
+        difference = putFirstRowColumn();
+        for(int i=1 ;i<width ;i++){
+            for(int j=1 ; j<height ; j++){
+                predict.get(i).set(j , predictPixel(i , j , originalList));
+            }
+        }
+        for(int i=1 ;i<width ;i++){
+            for(int j=1 ; j<height ; j++){
+                difference.get(i).set(j , getDifference(i , j , predict));
+            }
+        }
+        double max = -300;
+        int min = 300;
+        for(int i=1 ; i<width ; i++){
+            for(int j=1 ; j<height ; j++){
+                if(difference.get(i).get(j) > max){
+                    max = difference.get(i).get(j);
+                }
+                if(difference.get(i).get(j) < min){
+                    min = difference.get(i).get(j);
+                }
+            }
+        }
+        int step = 3;
+        buildQuantizer(min,max,step);
+    }*/
 }
